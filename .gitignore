@@ -1,0 +1,73 @@
+# =====================================================
+# CARWASH — .gitignore
+# =====================================================
+
+# Node.js / Frontend / WhatsApp
+node_modules/
+.pnp/
+.pnp.js
+.next/
+out/
+build/
+dist/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+.lintstagedrc
+
+# .NET / Backend
+bin/
+obj/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+*.csproj.user
+*.dll
+*.exe
+*.pdb
+*.mdb
+*.testresults
+*.coverage
+*.coveragexml
+*.vs/
+.vs/
+*.sln.ide
+
+# Environment
+.env
+.env.local
+.env.*.local
+.env.production
+
+# Supabase
+.supabase/
+supabase/.temp/
+*.db
+
+# WhatsApp sessions
+.sessions/
+apps/whatsapp-service/.sessions/
+apps/whatsapp-service/dist/
+
+# IDE / Editor
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# OS
+*.lnk
+
+# Test coverage
+coverage/
+.nyc_output/
+
+# Misc
+*.tgz
+.cache/

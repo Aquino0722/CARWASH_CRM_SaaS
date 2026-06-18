@@ -1,0 +1,43 @@
+# docker-compose.dev.yml — Local development orchestration placeholder
+#
+# This file is a placeholder for future local development orchestration.
+# Currently, Supabase local stack is managed via Supabase CLI:
+#   cd infra/supabase && supabase start
+#
+# When the .NET API and WhatsApp service are implemented, add services here:
+#
+# services:
+#   api:
+#     build:
+#       context: ./apps/api
+#       dockerfile: Dockerfile
+#     ports:
+#       - "5000:8080"
+#     env_file:
+#       - .env
+#     depends_on:
+#       - supabase
+#
+#   whatsapp-service:
+#     build:
+#       context: ./apps/whatsapp-service
+#       dockerfile: Dockerfile
+#     ports:
+#       - "4001:4001"
+#     env_file:
+#       - .env
+#     volumes:
+#       - whatsapp-sessions:/data/sessions
+#
+# volumes:
+#   whatsapp-sessions:
+#
+# For now, run each service directly:
+#   - .NET API: cd apps/api && dotnet run --project src/Carwash.WebApi
+#   - WhatsApp: cd apps/whatsapp-service && pnpm dev
+#   - Frontend: cd apps/web && pnpm dev
+version: '3.8'
+
+services:
+  # Placeholder — no services defined yet
+  # Supabase is managed via Supabase CLI separately
