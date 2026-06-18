@@ -2,9 +2,11 @@ using Carwash.Application;
 using Carwash.Application.Abstractions;
 using Carwash.Application.Abstractions.Persistence;
 using Carwash.Application.Common.Behaviors;
+using Carwash.Infrastructure.Persistence.Bays;
 using Carwash.Infrastructure.Persistence.Customers;
 using Carwash.Infrastructure.Persistence.ServiceOrders;
 using Carwash.Infrastructure.Persistence.Vehicles;
+using Carwash.Infrastructure.Persistence.WorkItems;
 using Carwash.Infrastructure.Security;
 using Carwash.WebApi.Middleware;
 using Carwash.WebApi.Security;
@@ -68,6 +70,18 @@ builder.Services.AddScoped<IServiceOrderRepository>(sp =>
 {
     var config = sp.GetRequiredService<IConfiguration>();
     return new ServiceOrderRepository(config["Database:ConnectionString"] ?? "");
+});
+
+builder.Services.AddScoped<IBayRepository>(sp =>
+{
+    var config = sp.GetRequiredService<IConfiguration>();
+    return new BayRepository(config["Database:ConnectionString"] ?? "");
+});
+
+builder.Services.AddScoped<IWorkItemRepository>(sp =>
+{
+    var config = sp.GetRequiredService<IConfiguration>();
+    return new WorkItemRepository(config["Database:ConnectionString"] ?? "");
 });
 
 var app = builder.Build();
