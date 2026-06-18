@@ -1,5 +1,6 @@
 using System.Text.Json;
 using Carwash.Application.Abstractions.Persistence;
+using Carwash.Application.Common;
 using Carwash.Application.Features.Customers;
 using Dapper;
 using Npgsql;

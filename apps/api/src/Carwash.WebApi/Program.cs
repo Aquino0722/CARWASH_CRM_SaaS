@@ -3,6 +3,7 @@ using Carwash.Application.Abstractions;
 using Carwash.Application.Abstractions.Persistence;
 using Carwash.Application.Common.Behaviors;
 using Carwash.Infrastructure.Persistence.Customers;
+using Carwash.Infrastructure.Persistence.Vehicles;
 using Carwash.Infrastructure.Security;
 using Carwash.WebApi.Middleware;
 using Carwash.WebApi.Security;
@@ -54,6 +55,12 @@ builder.Services.AddScoped<ICustomerRepository>(sp =>
 {
     var config = sp.GetRequiredService<IConfiguration>();
     return new CustomerRepository(config["Database:ConnectionString"] ?? "");
+});
+
+builder.Services.AddScoped<IVehicleRepository>(sp =>
+{
+    var config = sp.GetRequiredService<IConfiguration>();
+    return new VehicleRepository(config["Database:ConnectionString"] ?? "");
 });
 
 var app = builder.Build();

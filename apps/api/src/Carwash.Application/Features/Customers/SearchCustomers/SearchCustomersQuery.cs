@@ -1,3 +1,4 @@
+using Carwash.Application.Common;
 using MediatR;
 
 namespace Carwash.Application.Features.Customers.SearchCustomers;
