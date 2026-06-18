@@ -1,4 +1,4 @@
-namespace Carwash.Application.Features.Customers;
+namespace Carwash.Application.Common;
 
 public sealed record PaginatedResult<T>(
     IReadOnlyList<T> Items,

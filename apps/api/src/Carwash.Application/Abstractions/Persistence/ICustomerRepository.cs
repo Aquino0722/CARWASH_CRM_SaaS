@@ -1,3 +1,4 @@
+using Carwash.Application.Common;
 using Carwash.Application.Features.Customers;
 
 namespace Carwash.Application.Abstractions.Persistence;
