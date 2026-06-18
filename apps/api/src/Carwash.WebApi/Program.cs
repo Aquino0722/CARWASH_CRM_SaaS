@@ -1,7 +1,13 @@
+using Carwash.Application;
 using Carwash.Application.Abstractions;
+using Carwash.Application.Abstractions.Persistence;
+using Carwash.Application.Common.Behaviors;
+using Carwash.Infrastructure.Persistence.Customers;
 using Carwash.Infrastructure.Security;
 using Carwash.WebApi.Middleware;
 using Carwash.WebApi.Security;
+using FluentValidation;
+using MediatR;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Serilog;
 
@@ -36,6 +42,18 @@ builder.Services.AddScoped<ITenantContext>(sp =>
     var accessor = sp.GetRequiredService<IHttpContextAccessor>();
     var obj = accessor.HttpContext?.Items["TenantContext"];
     return obj as ITenantContext ?? new CurrentTenantContext { TenantId = Guid.Empty, Role = string.Empty };
+});
+
+builder.Services.AddMediatR(cfg =>
+    cfg.RegisterServicesFromAssembly(typeof(ApplicationAssemblyMarker).Assembly));
+
+builder.Services.AddValidatorsFromAssembly(typeof(ApplicationAssemblyMarker).Assembly);
+builder.Services.AddTransient(typeof(IPipelineBehavior<,>), typeof(ValidationBehavior<,>));
+
+builder.Services.AddScoped<ICustomerRepository>(sp =>
+{
+    var config = sp.GetRequiredService<IConfiguration>();
+    return new CustomerRepository(config["Database:ConnectionString"] ?? "");
 });
 
 var app = builder.Build();
