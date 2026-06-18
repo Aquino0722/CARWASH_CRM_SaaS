@@ -6,6 +6,8 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { TenantProvider } from "@/lib/tenant/tenant-context";
+import { TopbarTenant } from "@/components/topbar-tenant";
 import {
   Sheet,
   SheetClose,
@@ -96,6 +98,7 @@ export default function AppLayout({
   }
 
   return (
+    <TenantProvider>
     <Sheet>
       <div className="flex h-screen overflow-hidden">
         {/* Desktop sidebar */}
@@ -119,8 +122,7 @@ export default function AppLayout({
               CARWASH
             </span>
             <div className="hidden md:block text-sm text-muted-foreground">
-              Tenant:{" "}
-              <span className="font-medium text-foreground">Default</span>
+              Tenant: <TopbarTenant />
             </div>
             <div className="ml-auto flex items-center gap-2">
               <Button variant="ghost" size="sm" onClick={handleLogout}>
@@ -143,5 +145,6 @@ export default function AppLayout({
         <NavList onNavClick={() => {}} />
       </SheetContent>
     </Sheet>
+    </TenantProvider>
   );
 }
