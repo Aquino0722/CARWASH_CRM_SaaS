@@ -1,0 +1,25 @@
+namespace Carwash.Application.Features.ServiceOrders;
+
+public sealed record ServiceOrderDetailDto(
+    Guid Id,
+    Guid CustomerId,
+    string CustomerName,
+    Guid VehicleId,
+    string? Plate,
+    string? VehicleMake,
+    string? VehicleModel,
+    string Status,
+    string Title,
+    string? PackageName,
+    decimal? EstimatedPrice,
+    decimal? FinalPrice,
+    DateTime? CheckInAt,
+    DateTime? ScheduledAt,
+    DateTime? DueAt,
+    DateTime? DeliveredAt,
+    string? InternalNotes,
+    string? CustomerNotes,
+    int Version,
+    Guid? CreatedBy,
+    DateTime CreatedAt,
+    DateTime UpdatedAt);
