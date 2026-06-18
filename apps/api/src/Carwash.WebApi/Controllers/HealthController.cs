@@ -1,7 +1,9 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Carwash.WebApi.Controllers;
 
+[AllowAnonymous]
 [ApiController]
 public class HealthController : ControllerBase
 {
