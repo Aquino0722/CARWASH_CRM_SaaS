@@ -3,6 +3,7 @@ using Carwash.Application.Common;
 using Carwash.Application.Features.ServiceOrders;
 using Dapper;
 using Npgsql;
+using static Carwash.Application.Abstractions.Persistence.OutboxInsertResultType;
 
 namespace Carwash.Infrastructure.Persistence.ServiceOrders;
 
@@ -311,6 +312,113 @@ public sealed class ServiceOrderRepository : IServiceOrderRepository
         return new ServiceOrderStatusUpdateResult(Found: true, Conflict: true);
     }
 
+    public async Task<ServiceOrderDeliveryNotificationData?> GetDeliveryNotificationDataAsync(
+        Guid tenantId, Guid id, CancellationToken ct)
+    {
+        using var conn = new NpgsqlConnection(_connectionString);
+
+        var sql = """
+            SELECT c.full_name AS CustomerName,
+                   c.phone_e164 AS CustomerPhoneE164,
+                   v.plate AS Plate,
+                   v.make AS VehicleMake,
+                   v.model AS VehicleModel
+            FROM app.service_orders so
+            JOIN app.customers c ON c.id = so.customer_id AND c.tenant_id = so.tenant_id
+            JOIN app.vehicles v ON v.id = so.vehicle_id AND v.tenant_id = so.tenant_id
+            WHERE so.tenant_id = @TenantId AND so.id = @Id
+            """;
+
+        var row = await conn.QuerySingleOrDefaultAsync<ServiceOrderDeliveryNotificationRow>(sql,
+            new { TenantId = tenantId, Id = id });
+
+        if (row is null) return null;
+
+        return new ServiceOrderDeliveryNotificationData(
+            row.CustomerName, row.CustomerPhoneE164,
+            row.Plate, row.VehicleMake, row.VehicleModel);
+    }
+
+    public async Task<ServiceOrderStatusUpdateResult> UpdateStatusAndEnqueueAsync(
+        Guid tenantId, Guid id, int currentVersion, string newStatus,
+        OutboxMessageRow outboxMessage, CancellationToken ct)
+    {
+        using var conn = new NpgsqlConnection(_connectionString);
+        await conn.OpenAsync(ct);
+        await using var tx = await conn.BeginTransactionAsync(ct);
+
+        try
+        {
+            var updateSql = newStatus == "delivered"
+                ? """
+                  UPDATE app.service_orders
+                  SET status = @NewStatus::app.service_order_status,
+                      delivered_at = NOW(),
+                      version = version + 1,
+                      updated_at = NOW()
+                  WHERE id = @Id AND tenant_id = @TenantId AND version = @CurrentVersion
+                  """
+                : """
+                  UPDATE app.service_orders
+                  SET status = @NewStatus::app.service_order_status,
+                      version = version + 1,
+                      updated_at = NOW()
+                  WHERE id = @Id AND tenant_id = @TenantId AND version = @CurrentVersion
+                  """;
+
+            var affected = await conn.ExecuteAsync(updateSql, new
+            {
+                TenantId = tenantId,
+                Id = id,
+                CurrentVersion = currentVersion,
+                NewStatus = newStatus
+            }, tx);
+
+            if (affected == 0)
+            {
+                var exists = await conn.ExecuteScalarAsync<bool>(
+                    "SELECT EXISTS(SELECT 1 FROM app.service_orders WHERE id = @Id AND tenant_id = @TenantId)",
+                    new { Id = id, TenantId = tenantId }, tx);
+
+                await tx.RollbackAsync(ct);
+
+                return exists
+                    ? new ServiceOrderStatusUpdateResult(Found: true, Conflict: true)
+                    : new ServiceOrderStatusUpdateResult(Found: false);
+            }
+
+            var insertSql = """
+                INSERT INTO internal.message_outbox
+                    (tenant_id, channel, recipient_phone_e164, template_key,
+                     payload, idempotency_key, max_attempts, scheduled_at)
+                VALUES
+                    (@TenantId, @Channel, @RecipientPhoneE164, @TemplateKey,
+                     @Payload::jsonb, @IdempotencyKey, @MaxAttempts, @ScheduledAt)
+                ON CONFLICT (tenant_id, idempotency_key) DO NOTHING
+                """;
+
+            await conn.ExecuteAsync(insertSql, new
+            {
+                outboxMessage.TenantId,
+                outboxMessage.Channel,
+                outboxMessage.RecipientPhoneE164,
+                outboxMessage.TemplateKey,
+                outboxMessage.Payload,
+                outboxMessage.IdempotencyKey,
+                outboxMessage.MaxAttempts,
+                ScheduledAt = outboxMessage.ScheduledAt ?? DateTime.UtcNow
+            }, tx);
+
+            await tx.CommitAsync(ct);
+            return new ServiceOrderStatusUpdateResult(Found: true);
+        }
+        catch
+        {
+            await tx.RollbackAsync(ct);
+            throw;
+        }
+    }
+
     private sealed record ServiceOrderListRow
     {
         public Guid Id { get; init; }
@@ -326,6 +434,15 @@ public sealed class ServiceOrderRepository : IServiceOrderRepository
         public decimal? EstimatedPrice { get; init; }
         public DateTime? ScheduledAt { get; init; }
         public DateTime CreatedAt { get; init; }
+    }
+
+    private sealed record ServiceOrderDeliveryNotificationRow
+    {
+        public string CustomerName { get; init; } = default!;
+        public string? CustomerPhoneE164 { get; init; }
+        public string? Plate { get; init; }
+        public string? VehicleMake { get; init; }
+        public string? VehicleModel { get; init; }
     }
 
     private sealed record ServiceOrderDetailRow

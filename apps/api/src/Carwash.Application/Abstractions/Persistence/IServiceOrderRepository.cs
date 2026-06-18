@@ -32,4 +32,11 @@ public interface IServiceOrderRepository
         Guid tenantId, Guid id, int currentVersion,
         string newStatus,
         CancellationToken ct);
+
+    Task<ServiceOrderDeliveryNotificationData?> GetDeliveryNotificationDataAsync(
+        Guid tenantId, Guid id, CancellationToken ct);
+
+    Task<ServiceOrderStatusUpdateResult> UpdateStatusAndEnqueueAsync(
+        Guid tenantId, Guid id, int currentVersion, string newStatus,
+        OutboxMessageRow outboxMessage, CancellationToken ct);
 }
